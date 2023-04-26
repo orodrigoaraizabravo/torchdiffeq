@@ -8,11 +8,12 @@ from .misc import _check_inputs, _flat_to_shape, _mixed_norm, _all_callback_name
 class OdeintAdjointMethod(torch.autograd.Function):
 
     @staticmethod
-    def forward(ctx, shapes, func, y0, t, rtol, atol, method, options, event_fn, adjoint_rtol, adjoint_atol, adjoint_method,
+    def forward(ctx, shapes, func, func_back, y0, t, rtol, atol, method, options, event_fn, adjoint_rtol, adjoint_atol, adjoint_method,
                 adjoint_options, t_requires_grad, *adjoint_params):
 
         ctx.shapes = shapes
         ctx.func = func
+        ctx.func_back = func_back
         ctx.adjoint_rtol = adjoint_rtol
         ctx.adjoint_atol = adjoint_atol
         ctx.adjoint_method = adjoint_method
@@ -35,7 +36,7 @@ class OdeintAdjointMethod(torch.autograd.Function):
     @staticmethod
     def backward(ctx, *grad_y):
         with torch.no_grad():
-            func = ctx.func_back
+            func_back = ctx.func_back
             adjoint_rtol = ctx.adjoint_rtol
             adjoint_atol = ctx.adjoint_atol
             adjoint_method = ctx.adjoint_method
@@ -84,7 +85,7 @@ class OdeintAdjointMethod(torch.autograd.Function):
                     # If using an adaptive solver we don't want to waste time resolving dL/dt unless we need it (which
                     # doesn't necessarily even exist if there is piecewise structure in time), so turning off gradients
                     # wrt t here means we won't compute that if we don't need it.
-                    func_eval = func(t if t_requires_grad else t_, y)
+                    func_eval = func_back(t if t_requires_grad else t_, y)
 
                     # Workaround for PyTorch bug #39784
                     _t = torch.as_strided(t, (), ())  # noqa
@@ -107,7 +108,7 @@ class OdeintAdjointMethod(torch.autograd.Function):
             # Add adjoint callbacks
             for callback_name, adjoint_callback_name in zip(_all_callback_names, _all_adjoint_callback_names):
                 try:
-                    callback = getattr(func, adjoint_callback_name)
+                    callback = getattr(func_back, adjoint_callback_name)
                 except AttributeError:
                     pass
                 else:
@@ -125,7 +126,7 @@ class OdeintAdjointMethod(torch.autograd.Function):
                 if t_requires_grad:
                     # Compute the effect of moving the current time measurement point.
                     # We don't compute this unless we need to, to save some computation.
-                    func_eval = func(t[i], y[i])
+                    func_eval = func_back(t[i], y[i])
                     dLd_cur_t = func_eval.reshape(-1).dot(grad_y[i].reshape(-1))
                     aug_state[0] -= dLd_cur_t
                     time_vjps[i] = dLd_cur_t
@@ -153,7 +154,7 @@ class OdeintAdjointMethod(torch.autograd.Function):
         return (None, None, adj_y, time_vjps, None, None, None, None, None, None, None, None, None, None, *adj_params)
 
 
-def odeint_adjoint(func, y0, t, *, rtol=1e-7, atol=1e-9, method=None, options=None, event_fn=None,
+def odeint_adjoint(func, func_back, y0, t, *, rtol=1e-7, atol=1e-9, method=None, options=None, event_fn=None,
                    adjoint_rtol=None, adjoint_atol=None, adjoint_method=None, adjoint_options=None, adjoint_params=None):
 
     # We need this in order to access the variables inside this module,
@@ -197,13 +198,13 @@ def odeint_adjoint(func, y0, t, *, rtol=1e-7, atol=1e-9, method=None, options=No
                           "excluded from the adjoint pass, and will not appear as a tensor in the adjoint norm.")
 
     # Convert to flattened state.
-    shapes, func, y0, t, rtol, atol, method, options, event_fn, decreasing_time = _check_inputs(func, y0, t, rtol, atol, method, options, event_fn, SOLVERS)
+    shapes, func, func_back, y0, t, rtol, atol, method, options, event_fn, decreasing_time = _check_inputs(func, func_back, y0, t, rtol, atol, method, options, event_fn, SOLVERS)
 
     # Handle the adjoint norm function.
     state_norm = options["norm"]
     handle_adjoint_norm_(adjoint_options, shapes, state_norm)
 
-    ans = OdeintAdjointMethod.apply(shapes, func, y0, t, rtol, atol, method, options, event_fn, adjoint_rtol, adjoint_atol,
+    ans = OdeintAdjointMethod.apply(shapes, func, func_back, y0, t, rtol, atol, method, options, event_fn, adjoint_rtol, adjoint_atol,
                                     adjoint_method, adjoint_options, t.requires_grad, *adjoint_params)
 
     if event_fn is None:

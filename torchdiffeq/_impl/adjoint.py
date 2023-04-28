@@ -30,7 +30,7 @@ class OdeintAdjointMethod(torch.autograd.Function):
             else:
                 event_t, y = ans
                 ctx.save_for_backward(t, y, event_t, *adjoint_params)
-
+        print('Applied meant forward')
         return ans
 
     @staticmethod
@@ -152,9 +152,9 @@ class OdeintAdjointMethod(torch.autograd.Function):
 
             adj_y = aug_state[2]
             adj_params = aug_state[3:]
-
+        print('Applied meant backward')
         return (None, None, adj_y, time_vjps, None, None, None, None, None, None, None, None, None, None, *adj_params)
-
+    print('Apply meant apply')
 
 def odeint_adjoint(func, y0, t, *, func_back=None, rtol=1e-7, atol=1e-9, method=None, options=None, event_fn=None,
                    adjoint_rtol=None, adjoint_atol=None, adjoint_method=None, adjoint_options=None, adjoint_params=None):
@@ -205,7 +205,7 @@ def odeint_adjoint(func, y0, t, *, func_back=None, rtol=1e-7, atol=1e-9, method=
     #print('Flattened back')
     shapes, func_back, y0, t, rtol, atol, method, options, event_fn, decreasing_time = _check_inputs(func_back, y0, t, rtol, atol, method, options, event_fn, SOLVERS)
     
-    print(func==func_back)
+    #print(func==func_back)
     
     # Handle the adjoint norm function.
     state_norm = options["norm"]

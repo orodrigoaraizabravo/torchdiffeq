@@ -198,7 +198,12 @@ class _PerturbFunc(torch.nn.Module):
 
 
 def _check_inputs(func, y0, t, rtol, atol, method, options, event_fn, SOLVERS):
-
+    # Normalise time
+    _check_timelike('t', t, True)
+    t_is_reversed = False
+    if len(t) > 1 and t[0] > t[1]:
+        t_is_reversed = True
+    
     if event_fn is not None:
         if len(t) != 2:
             raise ValueError(f"We require len(t) == 2 when in event handling mode, but got len(t)={len(t)}.")
@@ -265,10 +270,6 @@ def _check_inputs(func, y0, t, rtol, atol, method, options, event_fn, SOLVERS):
             options['norm'] = _rms_norm
 
     # Normalise time
-    _check_timelike('t', t, True)
-    t_is_reversed = False
-    if len(t) > 1 and t[0] > t[1]:
-        t_is_reversed = True
 
     if t_is_reversed:
         # Change the integration times to ascending order.

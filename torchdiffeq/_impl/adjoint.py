@@ -198,7 +198,8 @@ def odeint_adjoint(func, func_back, y0, t, *, rtol=1e-7, atol=1e-9, method=None,
                           "excluded from the adjoint pass, and will not appear as a tensor in the adjoint norm.")
 
     # Convert to flattened state.
-    shapes, func, func_back, y0, t, rtol, atol, method, options, event_fn, decreasing_time = _check_inputs(func, func_back, y0, t, rtol, atol, method, options, event_fn, SOLVERS)
+    shapes, func, y0, t, rtol, atol, method, options, event_fn, decreasing_time = _check_inputs(func, y0, t, rtol, atol, method, options, event_fn, SOLVERS)
+    shapes, func_back, y0, t, rtol, atol, method, options, event_fn, decreasing_time = _check_inputs(func_back, y0, t, rtol, atol, method, options, event_fn, SOLVERS)
 
     # Handle the adjoint norm function.
     state_norm = options["norm"]

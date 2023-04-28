@@ -183,7 +183,7 @@ def odeint_adjoint(func, func_back, y0, t, *, rtol=1e-7, atol=1e-9, method=None,
         adjoint_options = adjoint_options.copy()
 
     if adjoint_params is None:
-        adjoint_params = tuple(find_parameters(func))
+        adjoint_params = tuple(find_parameters(func_back))
     else:
         adjoint_params = tuple(adjoint_params)  # in case adjoint_params is a generator.
 

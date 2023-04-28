@@ -199,6 +199,7 @@ def odeint_adjoint(func, func_back, y0, t, *, rtol=1e-7, atol=1e-9, method=None,
 
     # Convert to flattened state.
     shapes, func, y0, t, rtol, atol, method, options, event_fn, decreasing_time = _check_inputs(func, y0, t, rtol, atol, method, options, event_fn, SOLVERS)
+    print('Flattened back')
     shapes, func_back, y0, t, rtol, atol, method, options, event_fn, decreasing_time = _check_inputs(func_back, y0, t, rtol, atol, method, options, event_fn, SOLVERS)
 
     # Handle the adjoint norm function.

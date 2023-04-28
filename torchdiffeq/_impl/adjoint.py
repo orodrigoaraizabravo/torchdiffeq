@@ -156,12 +156,13 @@ class OdeintAdjointMethod(torch.autograd.Function):
         return (None, None, adj_y, time_vjps, None, None, None, None, None, None, None, None, None, None, *adj_params)
 
 
-def odeint_adjoint(func, func_back, y0, t, *, rtol=1e-7, atol=1e-9, method=None, options=None, event_fn=None,
+def odeint_adjoint(func, y0, t, *, func_back=None, rtol=1e-7, atol=1e-9, method=None, options=None, event_fn=None,
                    adjoint_rtol=None, adjoint_atol=None, adjoint_method=None, adjoint_options=None, adjoint_params=None):
-
+    
+    if func_back is None: func_back=func
     # We need this in order to access the variables inside this module,
     # since we have no other way of getting variables along the execution path.
-    if adjoint_params is None and not isinstance(func_back, nn.Module):
+    if adjoint_params is None and not isinstance(func, nn.Module):
         raise ValueError('func must be an instance of nn.Module to specify the adjoint parameters; alternatively they '
                          'can be specified explicitly via the `adjoint_params` argument. If there are no parameters '
                          'then it is allowable to set `adjoint_params=()`.')
@@ -201,9 +202,11 @@ def odeint_adjoint(func, func_back, y0, t, *, rtol=1e-7, atol=1e-9, method=None,
 
     # Convert to flattened state.
     shapes, func, y0, t, rtol, atol, method, options, event_fn, decreasing_time = _check_inputs(func, y0, t, rtol, atol, method, options, event_fn, SOLVERS)
-    print('Flattened back')
+    #print('Flattened back')
     shapes, func_back, y0, t, rtol, atol, method, options, event_fn, decreasing_time = _check_inputs(func_back, y0, t, rtol, atol, method, options, event_fn, SOLVERS)
-
+    
+    print(func==func_back)
+    
     # Handle the adjoint norm function.
     state_norm = options["norm"]
     handle_adjoint_norm_(adjoint_options, shapes, state_norm)

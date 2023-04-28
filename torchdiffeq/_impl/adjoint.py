@@ -159,7 +159,7 @@ def odeint_adjoint(func, func_back, y0, t, *, rtol=1e-7, atol=1e-9, method=None,
 
     # We need this in order to access the variables inside this module,
     # since we have no other way of getting variables along the execution path.
-    if adjoint_params is None and not isinstance(func, nn.Module):
+    if adjoint_params is None and not isinstance(func_back, nn.Module):
         raise ValueError('func must be an instance of nn.Module to specify the adjoint parameters; alternatively they '
                          'can be specified explicitly via the `adjoint_params` argument. If there are no parameters '
                          'then it is allowable to set `adjoint_params=()`.')

@@ -37,6 +37,8 @@ class OdeintAdjointMethod(torch.autograd.Function):
     def backward(ctx, *grad_y):
         with torch.no_grad():
             func_back = ctx.func_back
+            if func_back != ctx.func: print('using backwards func')
+            else: print('using forweards func')
             adjoint_rtol = ctx.adjoint_rtol
             adjoint_atol = ctx.adjoint_atol
             adjoint_method = ctx.adjoint_method

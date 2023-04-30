@@ -152,9 +152,9 @@ class OdeintAdjointMethod(torch.autograd.Function):
 
             adj_y = aug_state[2]
             adj_params = aug_state[3:]
-        print('Applied meant backward')
+        
         return (None, None, adj_y, time_vjps, None, None, None, None, None, None, None, None, None, None, *adj_params)
-    print('Apply meant apply')
+
 
 def odeint_adjoint(func, y0, t, *, func_back=None, rtol=1e-7, atol=1e-9, method=None, options=None, event_fn=None,
                    adjoint_rtol=None, adjoint_atol=None, adjoint_method=None, adjoint_options=None, adjoint_params=None):
